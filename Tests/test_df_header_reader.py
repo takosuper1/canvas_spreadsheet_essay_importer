@@ -18,6 +18,18 @@ class TestDataFrameHeader(unittest.TestCase):
         )
 
     def test_header_contains_ItemType(self):
+        # Test for new canvas quiz
+        df = pd.read_csv("./Sample_Data/generaluploadsample.csv")
+        # Convert headers to lowercase to avoid case issues.
+        lower_headers = df.columns.str.lower()
+
+        target_word = "essay"
+
+        self.assertIn(
+            target_word,
+            lower_headers,
+            f"{target_word} not found in dataframe headers.",
+        )
         return
 
     def test_header_contains_Attempt(self):
