@@ -1,18 +1,11 @@
-import pandas as pd
-import re
-import typing
+import helper_functions as hf
 
 
-# CONSTANTS
-studentIDColumn = "ID"
-studentNameColumn = "Name"
-
-
-
-
-
-def canvas_new_quiz_parse(df):
+def canvas_new_quiz_parse(df, studentIDColumn):
     # Find all columns named 'ItemType'
+    print(f"Student ID: {studentIDColumn}")
+    studentIDColumn = hf.find_column_by_pattern(df, studentIDColumn)
+    print(f"Student ID: {studentIDColumn}")
     itemtype_indices = [
         i
         for i, col in enumerate(df.columns)
@@ -30,7 +23,7 @@ def canvas_new_quiz_parse(df):
 
     # Extract ID and the columns after each ItemType
     columns_to_extract = [studentIDColumn]
-    column_positions = [df.columns.get_loc(studentIDColumn.upper())]
+    column_positions = [df.columns.get_loc(studentIDColumn)]
 
     for idx in itemtype_indices:
         if idx + 1 < len(df.columns):
@@ -55,13 +48,35 @@ def canvas_new_quiz_parse(df):
             new_column_names.append(f"ItemType{i}")
 
     extracted_df.columns = new_column_names
-    return extracted_df
+    combined_extracted_columns = combine_same_name_columns(extracted_df)
+    cleaned_df = hf.remove_html_tags(combined_extracted_columns, "Combined_ItemType")
+    return cleaned_df
 
 
+# Combine all after_ItemType columns
+def combine_same_name_columns(df,columnName = "ItemType"):
+    """
+      Combines all columns that start with  into a single column.
+      Takes the non-NaN value when only one column has data.
+      """
+    same_name_columns = []
+    for idx, col in enumerate(df.columns):
+        # Find all after_ItemType columns
+        same_name_columns = [col for col in df.columns if col.startswith(columnName)]
 
+    if len(same_name_columns) == 0:
+        print("No after_ItemType columns found to combine.")
+        return df
 
+    print(f"Combining {len(same_name_columns)} columns: {same_name_columns}")
 
+    # Create combined column by taking first non-NaN value across the row
+    df["Combined_ItemType"] = df[same_name_columns].bfill(axis=1).iloc[:, 0]
 
+    # Drop the original after_ItemType columns
+    df = df.drop(columns=same_name_columns)
+
+    return df
 
 
 
