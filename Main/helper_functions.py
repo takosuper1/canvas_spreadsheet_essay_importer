@@ -2,29 +2,94 @@ import os
 import magic
 
 
+class UnsupportedFileTypeError(Exception):
+    """Raised when the file type is not supported"""
+    pass
+
+
+class FileNotFoundError(Exception):
+    """Raised when the file does not exist"""
+    pass
+
+
 def check_file_type(file_path):
-    # Check if the file exists
+    """
+    Check if a file is CSV, XLSX, or ODS.
+
+    Args:
+        file_path (str): Path to the file to check
+
+    Returns:
+        str: One of "CSV", "XLSX", or "ODS"
+
+    Raises:
+        FileNotFoundError: If the file does not exist (built-in exception)
+        UnsupportedFileTypeError: If the file is not CSV, XLSX, or ODS
+        IOError: If there's an error reading the file
+    """
+    # Check if the file exists (raises built-in FileNotFoundError)
     if not os.path.exists(file_path):
-        return "Error: File does not exist."
+        raise FileNotFoundError(f"File does not exist: {file_path}")
+    # Check if it's actually a file (not a directory)
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"Path is not a file: {file_path}")
 
-    # Initialize the magic library
-    mime = magic.Magic(mime=True)
+    try:
+        # Initialize the magic library
+        mime = magic.Magic(mime=True)
 
-    # Get the MIME type of the file
-    mime_type = mime.from_file(file_path)
+        # Get the MIME type of the file
+        mime_type = mime.from_file(file_path)
 
-    # Determine the file type based on MIME type
-    if mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-        return "XLSX"
-    elif mime_type == "application/vnd.oasis.opendocument.spreadsheet":
-        return "ODS"
-    elif mime_type == "text/csv" or mime_type == "text/plain":
-        # Further check for CSV or TSV
-        with open(file_path, "r", encoding="utf-8") as file:
-            first_line = file.readline()
-            if "\t" in first_line:
-                return "TSV"
-            else:
-                return "CSV"
-    else:
-        return f"File is not a recognized spreadsheet or CSV/TSV file. Detected MIME type: {mime_type}"
+        # Check for XLSX
+        if mime_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            return "XLSX"
+
+        # Check for ODS
+        elif mime_type == "application/vnd.oasis.opendocument.spreadsheet":
+            return "ODS"
+
+        # Check for CSV (text/csv or text/plain)
+        elif mime_type in ["text/csv", "text/plain"]:
+            # Try to verify it's actually CSV by checking for delimiters
+            try:
+                with open(file_path, "r", encoding="utf-8") as file:
+                    first_line = file.readline()
+
+                    # If file is empty, raise error
+                    if not first_line:
+                        raise UnsupportedFileTypeError(
+                            f"File appears to be empty: {file_path}"
+                        )
+
+                    # Check if it contains comma delimiters (CSV characteristic)
+                    # We're being lenient here - you might want stricter validation
+                    if "," in first_line or mime_type == "text/csv":
+                        return "CSV"
+                    else:
+                        raise UnsupportedFileTypeError(
+                            f"File does not appear to be a valid CSV. "
+                            f"Detected MIME type: {mime_type}"
+                        )
+
+            except UnicodeDecodeError as e:
+                raise IOError(
+                    f"Unable to read file with UTF-8 encoding: {file_path}. "
+                    f"Error: {str(e)}"
+                )
+            except IOError as e:
+                # Re-raise IOError with more context
+                raise IOError(f"Error reading file {file_path}: {str(e)}")
+
+        # Any other MIME type is unsupported
+        else:
+            raise UnsupportedFileTypeError(
+                f"Unsupported file type. Only CSV, XLSX, and ODS files are accepted. "
+                f"Detected MIME type: {mime_type}"
+            )
+
+    except magic.MagicException as e:
+        raise IOError(f"Error detecting file type for {file_path}: {str(e)}")
+
+def check_essay_file_format(df):
+    return
