@@ -2,11 +2,43 @@ import pandas as pd
 import helper_functions as hf
 
 
-def canvas_old_quiz_parse(df, studentIDColumn):
-    # Find all columns named 'ItemType'
+def canvas_old_quiz_parse(df, studentIDColumn, studentNameColumn):
+    """
+    Parse Canvas Old Quiz export data by extracting student IDs, names, and essay answers following 'attempt' columns.
+
+    This function processes Canvas old quiz export DataFrames that contain multiple 'attempt' columns,
+    extracting the student ID column, student name column, and the column immediately following each
+    'attempt' column (which typically contains the student's essay answer). The answer columns are
+    renamed to 'Essay1', 'Essay2', etc. for clarity.
+
+    Args:
+        df (pandas.DataFrame): The Canvas old quiz export DataFrame containing 'attempt' columns
+        studentIDColumn (str): The name or pattern of the column containing student IDs
+        studentNameColumn (str): The name or pattern of the column containing student names
+
+    Returns:
+        pandas.DataFrame: A DataFrame with:
+            - The student ID column
+            - The student name column
+            - Renamed essay answer columns (Essay1, Essay2, Essay3, etc.)
+
+    Raises:
+        ValueError: If no columns named 'attempt' are found in the DataFrame
+
+    Notes:
+        - This function is specifically designed for Canvas Classic Quiz exports
+        - Each 'attempt' column is expected to be followed by an answer column
+        - Prints diagnostic information about columns being extracted
+        - Uses iloc to properly handle DataFrames with duplicate column names
+
+    """
+    # Find all columns named 'attempt'
     print(f"Student ID: {studentIDColumn}")
     studentIDColumn = hf.find_column_by_pattern(df, studentIDColumn)
+    studentNameColumn = hf.find_column_by_pattern(df, studentNameColumn)
     print(f"Student ID: {studentIDColumn}")
+    print(f"Student Name: {studentNameColumn}")
+
     itemtype_indices = [
         i
         for i, col in enumerate(df.columns)
@@ -22,9 +54,9 @@ def canvas_old_quiz_parse(df, studentIDColumn):
     )
     print("\n" + "=" * 50 + "\n")
 
-    # Extract ID and the columns after each ItemType
-    columns_to_extract = [studentIDColumn]
-    column_positions = [df.columns.get_loc(studentIDColumn)]
+    # Extract ID, Name, and the columns after each attempt
+    columns_to_extract = [studentIDColumn, studentNameColumn]
+    column_positions = [df.columns.get_loc(studentIDColumn), df.columns.get_loc(studentNameColumn)]
 
     for idx in itemtype_indices:
         if idx + 1 < len(df.columns):
@@ -42,7 +74,7 @@ def canvas_old_quiz_parse(df, studentIDColumn):
     extracted_df = df.iloc[:, column_positions]
 
     # Rename columns to be clear about which is which
-    new_column_names = [studentIDColumn]
+    new_column_names = [studentIDColumn, studentNameColumn]
     for i, idx in enumerate(itemtype_indices, 1):
         if idx + 1 < len(df.columns):
             # rename columns

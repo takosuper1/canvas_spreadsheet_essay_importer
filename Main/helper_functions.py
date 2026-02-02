@@ -3,6 +3,7 @@ import magic
 import re
 import pandas as pd
 
+
 # ERRORS/EXCEPTIONS
 class UnsupportedFileTypeError(Exception):
     """Raised when the file type is not supported"""
@@ -13,9 +14,11 @@ class FileNotFoundError(Exception):
     """Raised when the file does not exist"""
     pass
 
-class SpreadSheetColumnFormatError (Exception):
+
+class SpreadSheetColumnFormatError(Exception):
     """Raised when the formatting of the spreadsheet is not supported"""
     pass
+
 
 def check_file_type(file_path):
     """
@@ -99,15 +102,28 @@ def check_file_type(file_path):
 
 def check_essay_file_format(df, column_names_list):
     """
-    Check if the dataframe has all required columns (using regex matching)
-    and return True if there are extra columns beyond the required ones.
+    Validate that a DataFrame contains all required columns and detect extra columns.
+
+    This function checks if the provided DataFrame has columns matching all the required
+    regex patterns and reports whether there are additional columns beyond those required.
+    Uses case-insensitive regex matching to find columns.
 
     Args:
-        df: pandas DataFrame
-        column_names_list: list of regex patterns to match against column names
+        df (pandas.DataFrame): The DataFrame to validate
+        column_names_list (list of str): List of regex patterns to match against column names.
+            Each pattern should match at least one column in the DataFrame.
 
     Returns:
-        True if there are more columns than matches found, False otherwise
+        bool: True if there are extra columns beyond the required matches, False otherwise.
+            Also returns False if any required pattern is not found (with error message printed).
+
+    Notes:
+        - Uses case-insensitive regex matching
+        - Each pattern is matched only once (first match wins)
+        - Prints error message if required columns are missing
+        - Prints warning message if extra columns are detected
+
+
     """
     # Compile regex patterns (case-insensitive)
     compiled_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in column_names_list]
@@ -138,11 +154,29 @@ def check_essay_file_format(df, column_names_list):
     return False
 
 
-
-# Remove HTML tags from a column
 def remove_html_tags(df, column_name):
     """
-    Removes HTML tags from the specified column.
+    Remove all HTML tags from a specified column in a DataFrame.
+
+    This function strips HTML tags from text data and normalizes whitespace in the
+    specified column. It preserves the original DataFrame structure and handles
+    NaN values appropriately.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame containing the column to clean
+        column_name (str): The name of the column from which to remove HTML tags
+
+    Returns:
+        pandas.DataFrame: The DataFrame with HTML tags removed from the specified column.
+            Returns the original DataFrame unchanged if the column is not found.
+
+    Notes:
+        - Uses regex to remove all HTML tags (anything between < and >)
+        - Collapses multiple whitespace characters into single spaces
+        - Strips leading and trailing whitespace
+        - Preserves NaN values without modification
+        - Prints a message if the specified column is not found
+
     """
     if column_name not in df.columns:
         print(f"Column '{column_name}' not found in dataframe.")
@@ -167,14 +201,24 @@ def remove_html_tags(df, column_name):
 
 def find_column_by_pattern(df, pattern):
     """
-    Find the first column that matches the given regex pattern.
+    Find the first column in a DataFrame that matches a given regex pattern.
+
+    This function performs case-insensitive regex matching against all column names
+    in the DataFrame and returns the first match found.
 
     Args:
-        df: pandas DataFrame
-        pattern: regex pattern string
+        df (pandas.DataFrame): The DataFrame to search
+        pattern (str): A regex pattern string to match against column names
 
     Returns:
-        str: The actual column name that matches, or None if no match found
+        str or None: The actual column name that matches the pattern, or None if no match is found
+
+    Notes:
+        - Matching is case-insensitive
+        - Returns only the first match if multiple columns match the pattern
+        - The pattern is treated as a regex, not a literal string
+
+
     """
     compiled_pattern = re.compile(pattern, re.IGNORECASE)
     for col in df.columns:
