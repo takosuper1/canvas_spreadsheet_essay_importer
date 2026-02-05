@@ -1,6 +1,3 @@
-Yep—what you already have *is basically Markdown*, but here it is cleanly formatted and ready to drop straight into a `README.md` file:
-
-````md
 # Canvas Spreadsheet Essay Importer
 
 ## Overview
@@ -49,13 +46,3 @@ Column names are automatically detected and normalized where possible.
 
 The function returns a **pandas DataFrame** containing the extracted and cleaned essay data, ready for downstream processing such as grading, analysis, or export to another system.
 
-```
-
-If you want next steps, I can:
-- Add a **Quick Start** section
-- Add **installation / requirements**
-- Include a **sample DataFrame preview**
-- Write a short **Roadmap** section (ODS support would fit nicely there)
-
-Just tell me how “public-facing” you want this repo to be.
-```
